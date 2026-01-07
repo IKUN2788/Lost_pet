@@ -1,0 +1,259 @@
+{% extends "base.html" %}
+
+{% block title %}{{ post.title }} - 宠物丢失网站{% endblock %}
+
+{% block content %}
+<!-- 返回按钮 -->
+<div style="margin-bottom: 1rem;">
+    <a href="{{ url_for('index') }}" class="btn" style="background-color: #95a5a6; color: white;">
+        ← 返回首页
+    </a>
+</div>
+
+<!-- 帖子详情 -->
+<div class="card" style="margin-bottom: 2rem;">
+    <div class="card-body">
+        <!-- 标题和基本信息 -->
+        <div style="border-bottom: 1px solid #eee; padding-bottom: 1rem; margin-bottom: 1.5rem;">
+            <h1 style="color: #2c3e50; margin-bottom: 1rem;">{{ post.title }}</h1>
+            <div style="display: flex; flex-wrap: wrap; gap: 1rem; color: #7f8c8d;">
+                <span>🏷️ {{ post.pet_type }}</span>
+                <span>📍 {{ post.lost_location }}</span>
+                <span>👤 {{ post.author.username }}</span>
+                <span>🕒 {{ post.created_at.strftime('%Y年%m月%d日 %H:%M') }}</span>
+            </div>
+        </div>
+        
+        <!-- 图片展示 -->
+        {% if post.images %}
+        <div style="margin-bottom: 2rem;">
+            <h3 style="color: #2c3e50; margin-bottom: 1rem;">📷 宠物照片</h3>
+            <div class="image-grid">
+                {% for image in post.images %}
+                <div class="image-item">
+                    <img src="{{ url_for('static', filename='uploads/' + image.filename) }}" 
+                         alt="宠物照片" onclick="openImageModal(this.src)" 
+                         style="cursor: pointer;">
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+        {% endif %}
+        
+        <!-- 详细描述 -->
+        <div style="margin-bottom: 2rem;">
+            <h3 style="color: #2c3e50; margin-bottom: 1rem;">📝 详细描述</h3>
+            <div style="background-color: #f8f9fa; padding: 1.5rem; border-radius: 8px; 
+                        line-height: 1.8; white-space: pre-wrap;">{{ post.description }}</div>
+        </div>
+        
+        <!-- 联系方式 -->
+        <div style="background-color: #e8f5e8; padding: 1.5rem; border-radius: 8px; margin-bottom: 2rem;">
+            <h3 style="color: #27ae60; margin-bottom: 1rem;">📞 联系方式</h3>
+            <p style="font-size: 1.1rem; margin: 0; color: #2c3e50;">{{ post.contact_info }}</p>
+            <small style="color: #666;">如果您有相关线索，请通过以上方式联系失主</small>
+        </div>
+        
+        <!-- 操作按钮 -->
+        {% if current_user.is_authenticated and current_user.id == post.user_id %}
+        <div style="text-align: right; padding-top: 1rem; border-top: 1px solid #eee;">
+            <form method="POST" action="{{ url_for('delete_post', post_id=post.id) }}" 
+                  style="display: inline;" 
+                  onsubmit="return confirm('确定要删除这条寻宠信息吗？')">
+                <button type="submit" class="btn btn-danger">
+                    🗑️ 删除帖子
+                </button>
+            </form>
+        </div>
+        {% endif %}
+    </div>
+</div>
+
+<!-- 评论区 -->
+<div class="card">
+    <div class="card-header">
+        <h3 style="margin: 0;">💬 评论区 ({{ comments|length }})</h3>
+    </div>
+    <div class="card-body">
+        <!-- 发表评论 -->
+        {% if current_user.is_authenticated %}
+        <div style="background-color: #f8f9fa; padding: 1.5rem; border-radius: 8px; margin-bottom: 2rem;">
+            <h4 style="margin-bottom: 1rem;">发表评论</h4>
+            <form class="comment-form" data-post-id="{{ post.id }}" onsubmit="submitComment(event)">
+                <div class="form-group">
+                    <textarea class="form-control" name="content" required 
+                              placeholder="如果您有相关线索或想要提供帮助，请在这里留言..." 
+                              rows="3" maxlength="1000"></textarea>
+                </div>
+                
+                <div class="form-group">
+                    <label for="comment_images">上传图片（可选，最多3张）</label>
+                    <input type="file" id="comment_images" name="comment_images" 
+                           multiple accept="image/*" class="form-control">
+                </div>
+                
+                <button type="submit" class="btn btn-primary">
+                    发表评论
+                </button>
+            </form>
+        </div>
+        {% else %}
+        <div style="text-align: center; padding: 2rem; background-color: #f8f9fa; 
+                    border-radius: 8px; margin-bottom: 2rem;">
+            <p style="margin-bottom: 1rem; color: #666;">请登录后发表评论</p>
+            <a href="{{ url_for('login') }}" class="btn btn-primary">立即登录</a>
+        </div>
+        {% endif %}
+        
+        <!-- 评论列表 -->
+        {% if comments %}
+        <div class="comments-list">
+            {% for comment in comments %}
+            <div class="comment">
+                <div class="comment-header">
+                    <span class="comment-author">{{ comment.author.username }}</span>
+                    <span class="comment-date">{{ comment.created_at.strftime('%Y-%m-%d %H:%M') }}</span>
+                    {% if current_user.is_authenticated and (comment.user_id == current_user.id or post.user_id == current_user.id) %}
+                    <button class="btn btn-sm btn-outline-danger" 
+                            onclick="deleteComment({{ comment.id }})" 
+                            style="margin-left: auto; padding: 0.2rem 0.5rem; font-size: 0.8rem;">
+                        删除
+                    </button>
+                    {% endif %}
+                </div>
+                
+                <div class="comment-content" style="margin: 0.5rem 0;">
+                    {{ comment.content }}
+                </div>
+                
+                <!-- 评论图片 -->
+                {% if comment.images %}
+                <div class="comment-images" style="margin-top: 1rem;">
+                    <div style="display: flex; gap: 0.5rem; flex-wrap: wrap;">
+                        {% for image in comment.images %}
+                        <img src="{{ url_for('static', filename='uploads/' + image.filename) }}" 
+                             alt="评论图片" 
+                             style="width: 100px; height: 100px; object-fit: cover; 
+                                    border-radius: 8px; cursor: pointer;" 
+                             onclick="openImageModal(this.src)">
+                        {% endfor %}
+                    </div>
+                </div>
+                {% endif %}
+            </div>
+            {% endfor %}
+        </div>
+        {% else %}
+        <div style="text-align: center; padding: 2rem; color: #999;">
+            <div style="font-size: 2rem; margin-bottom: 1rem;">💭</div>
+            <p>暂无评论，成为第一个评论的人吧！</p>
+        </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+// 提交评论
+function submitComment(event) {
+    event.preventDefault();
+    
+    const form = event.target;
+    const formData = new FormData(form);
+    const postId = form.dataset.postId;
+    
+    // 检查评论内容
+    const content = formData.get('content').trim();
+    if (!content) {
+        showAlert('请输入评论内容', 'danger');
+        return;
+    }
+    
+    // 显示加载状态
+    const submitBtn = form.querySelector('button[type="submit"]');
+    const originalText = submitBtn.textContent;
+    submitBtn.textContent = '发布中...';
+    submitBtn.disabled = true;
+    
+    fetch(`/add_comment/${postId}`, {
+        method: 'POST',
+        body: formData
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            showAlert('评论发布成功！', 'success');
+            setTimeout(() => {
+                location.reload();
+            }, 1000);
+        } else {
+            showAlert(data.message || '评论发布失败', 'danger');
+            submitBtn.textContent = originalText;
+            submitBtn.disabled = false;
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        showAlert('网络错误，请稍后重试', 'danger');
+        submitBtn.textContent = originalText;
+        submitBtn.disabled = false;
+    });
+}
+
+// 删除评论
+function deleteComment(commentId) {
+    if (!confirm('确定要删除这条评论吗？此操作不可撤销。')) {
+        return;
+    }
+    
+    fetch(`/delete_comment/${commentId}`, {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+        }
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            showAlert('评论已删除', 'success');
+            setTimeout(() => {
+                location.reload();
+            }, 1000);
+        } else {
+            showAlert(data.message || '删除失败', 'danger');
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        showAlert('网络错误，请稍后重试', 'danger');
+    });
+}
+
+// 图片模态框
+function openImageModal(src) {
+    const modal = document.createElement('div');
+    modal.className = 'image-modal';
+    modal.innerHTML = `
+        <div class="modal-backdrop" onclick="closeModal(this)">
+            <div class="modal-content">
+                <img src="${src}" alt="图片">
+                <button class="close-btn" onclick="closeModal(this)">&times;</button>
+            </div>
+        </div>
+    `;
+    
+    document.body.appendChild(modal);
+    document.body.style.overflow = 'hidden';
+}
+
+// 关闭模态框
+function closeModal(element) {
+    const modal = element.closest('.image-modal');
+    if (modal) {
+        modal.remove();
+        document.body.style.overflow = 'auto';
+    }
+}
+</script>
+{% endblock %}

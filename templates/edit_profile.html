@@ -1,0 +1,169 @@
+{% extends "base.html" %}
+
+{% block title %}编辑个人资料 - 宠物丢失网站{% endblock %}
+
+{% block content %}
+<div class="card" style="margin-bottom: 2rem;">
+    <div class="card-header">
+        <div style="display: flex; justify-content: space-between; align-items: center;">
+            <h2 style="margin: 0;">✏️ 编辑个人资料</h2>
+            <a href="{{ url_for('profile') }}" class="btn btn-secondary">
+                ← 返回资料页
+            </a>
+        </div>
+    </div>
+</div>
+
+<div class="card">
+    <div class="card-body">
+        <form method="POST" enctype="multipart/form-data" id="profileForm">
+            <div style="display: grid; grid-template-columns: 300px 1fr; gap: 2rem; align-items: start;">
+                <!-- 头像上传区域 -->
+                <div style="text-align: center;">
+                    <div style="margin-bottom: 1rem;">
+                        <label style="font-weight: bold; color: #555; display: block; margin-bottom: 0.5rem;">📷 头像</label>
+                        <div id="avatarPreview" style="margin-bottom: 1rem;">
+                            {% if user.avatar %}
+                                <img src="{{ url_for('static', filename='uploads/' + user.avatar) }}" 
+                                     alt="当前头像" 
+                                     style="width: 150px; height: 150px; border-radius: 50%; object-fit: cover; border: 3px solid #3498db;">
+                            {% else %}
+                                <div style="width: 150px; height: 150px; border-radius: 50%; background-color: #3498db; 
+                                            display: flex; align-items: center; justify-content: center; color: white; 
+                                            font-size: 3rem; margin: 0 auto;">
+                                    {{ user.username[0].upper() }}
+                                </div>
+                            {% endif %}
+                        </div>
+                        <input type="file" id="avatar" name="avatar" accept="image/*" 
+                               style="display: none;" onchange="previewAvatar(this)">
+                        <button type="button" class="btn btn-outline-primary" onclick="document.getElementById('avatar').click()">
+                            📁 选择头像
+                        </button>
+                        <p style="font-size: 0.9rem; color: #666; margin-top: 0.5rem;">支持 JPG、PNG 格式</p>
+                    </div>
+                </div>
+                
+                <!-- 基本信息表单 -->
+                <div>
+                    <h4 style="color: #2c3e50; margin-bottom: 1.5rem; border-bottom: 2px solid #3498db; padding-bottom: 0.5rem;">📋 基本信息</h4>
+                    
+                    <div style="display: grid; gap: 1.5rem;">
+                        <div class="form-group">
+                            <label for="real_name" style="font-weight: bold; color: #555; display: block; margin-bottom: 0.5rem;">👤 真实姓名</label>
+                            <input type="text" id="real_name" name="real_name" 
+                                   value="{{ user.real_name or '' }}" 
+                                   placeholder="请输入您的真实姓名"
+                                   style="width: 100%; padding: 0.75rem; border: 2px solid #ddd; border-radius: 5px; font-size: 1rem;">
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="phone" style="font-weight: bold; color: #555; display: block; margin-bottom: 0.5rem;">📱 手机号码</label>
+                            <input type="tel" id="phone" name="phone" 
+                                   value="{{ user.phone or '' }}" 
+                                   placeholder="请输入您的手机号码"
+                                   pattern="[0-9]{11}"
+                                   style="width: 100%; padding: 0.75rem; border: 2px solid #ddd; border-radius: 5px; font-size: 1rem;">
+                            <small style="color: #666; font-size: 0.9rem;">请输入11位手机号码</small>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="location" style="font-weight: bold; color: #555; display: block; margin-bottom: 0.5rem;">📍 所在地区</label>
+                            <input type="text" id="location" name="location" 
+                                   value="{{ user.location or '' }}" 
+                                   placeholder="如：北京市朝阳区"
+                                   style="width: 100%; padding: 0.75rem; border: 2px solid #ddd; border-radius: 5px; font-size: 1rem;">
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="bio" style="font-weight: bold; color: #555; display: block; margin-bottom: 0.5rem;">📝 个人简介</label>
+                            <textarea id="bio" name="bio" rows="4" 
+                                      placeholder="介绍一下自己吧..."
+                                      style="width: 100%; padding: 0.75rem; border: 2px solid #ddd; border-radius: 5px; font-size: 1rem; resize: vertical;">{{ user.bio or '' }}</textarea>
+                            <small style="color: #666; font-size: 0.9rem;">最多200个字符</small>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- 提交按钮 -->
+            <div style="margin-top: 2rem; text-align: center; padding-top: 2rem; border-top: 1px solid #eee;">
+                <button type="submit" class="btn btn-primary" style="padding: 0.75rem 2rem; font-size: 1.1rem;">
+                    💾 保存资料
+                </button>
+                <a href="{{ url_for('profile') }}" class="btn btn-secondary" style="margin-left: 1rem; padding: 0.75rem 2rem; font-size: 1.1rem;">
+                    ❌ 取消
+                </a>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- JavaScript -->
+<script>
+function previewAvatar(input) {
+    if (input.files && input.files[0]) {
+        const reader = new FileReader();
+        reader.onload = function(e) {
+            const preview = document.getElementById('avatarPreview');
+            preview.innerHTML = `
+                <img src="${e.target.result}" 
+                     alt="头像预览" 
+                     style="width: 150px; height: 150px; border-radius: 50%; object-fit: cover; border: 3px solid #3498db;">
+            `;
+        };
+        reader.readAsDataURL(input.files[0]);
+    }
+}
+
+// 表单验证
+document.getElementById('profileForm').addEventListener('submit', function(e) {
+    const phone = document.getElementById('phone').value;
+    const bio = document.getElementById('bio').value;
+    
+    // 验证手机号格式
+    if (phone && !/^[0-9]{11}$/.test(phone)) {
+        alert('请输入正确的11位手机号码');
+        e.preventDefault();
+        return;
+    }
+    
+    // 验证简介长度
+    if (bio.length > 200) {
+        alert('个人简介不能超过200个字符');
+        e.preventDefault();
+        return;
+    }
+});
+</script>
+
+<!-- 响应式样式 -->
+<style>
+@media (max-width: 768px) {
+    .card-body form > div:first-child {
+        grid-template-columns: 1fr !important;
+        text-align: center;
+    }
+    
+    .form-group {
+        margin-bottom: 1rem;
+    }
+}
+
+.form-group input:focus,
+.form-group textarea:focus {
+    border-color: #3498db;
+    outline: none;
+    box-shadow: 0 0 5px rgba(52, 152, 219, 0.3);
+}
+
+.btn {
+    transition: all 0.3s ease;
+}
+
+.btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+}
+</style>
+{% endblock %}

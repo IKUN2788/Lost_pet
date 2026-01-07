@@ -1,0 +1,90 @@
+{% extends "base.html" %}
+
+{% block title %}用户登录 - 宠物丢失网站{% endblock %}
+
+{% block content %}
+<div class="card" style="max-width: 450px; margin: 2rem auto;">
+    <div class="card-header">
+        <h2>用户登录</h2>
+    </div>
+    <div class="card-body">
+        <form method="POST" onsubmit="return validateForm('login-form')" id="login-form">
+            <div class="form-group">
+                <label for="email">邮箱</label>
+                <input type="email" class="form-control" id="email" name="email" required 
+                       placeholder="请输入邮箱" value="{{ request.form.email or '' }}">
+            </div>
+            
+            <div class="form-group">
+                <label for="password">密码</label>
+                <input type="password" class="form-control" id="password" name="password" required 
+                       placeholder="请输入密码">
+            </div>
+            
+            <div class="form-group" style="display: flex; align-items: center; gap: 0.5rem;">
+                <input type="checkbox" id="remember_me" name="remember_me">
+                <label for="remember_me" style="margin: 0; font-weight: normal;">记住我</label>
+            </div>
+            
+            <button type="submit" class="btn btn-primary" style="width: 100%; margin-top: 1rem;">
+                登录
+            </button>
+        </form>
+        
+        <div style="text-align: center; margin-top: 1.5rem; padding-top: 1rem; border-top: 1px solid #eee;">
+            <p>还没有账号？ <a href="{{ url_for('register') }}" style="color: #3498db;">立即注册</a></p>
+        </div>
+        
+        <div style="background-color: #f8f9fa; padding: 1rem; border-radius: 8px; margin-top: 1rem;">
+            <h4 style="color: #2c3e50; margin-bottom: 0.5rem;">💡 网站功能介绍</h4>
+            <ul style="color: #555; margin: 0; padding-left: 1.5rem;">
+                <li>发布丢失宠物信息，最多上传9张照片</li>
+                <li>浏览其他用户发布的寻宠信息</li>
+                <li>在帖子下方评论，提供线索和帮助</li>
+                <li>评论支持上传图片，方便提供更多信息</li>
+            </ul>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+// 表单验证
+function validateForm(formId) {
+    const form = document.getElementById(formId);
+    const email = document.getElementById('email').value.trim();
+    const password = document.getElementById('password').value;
+    
+    if (!email) {
+        showAlert('请输入邮箱', 'danger');
+        document.getElementById('email').focus();
+        return false;
+    }
+    
+    if (!email.includes('@')) {
+        showAlert('请输入有效的邮箱地址', 'danger');
+        document.getElementById('email').focus();
+        return false;
+    }
+    
+    if (!password) {
+        showAlert('请输入密码', 'danger');
+        document.getElementById('password').focus();
+        return false;
+    }
+    
+    return true;
+}
+
+// 回车键登录
+document.addEventListener('keypress', function(e) {
+    if (e.key === 'Enter') {
+        const form = document.getElementById('login-form');
+        if (validateForm('login-form')) {
+            form.submit();
+        }
+    }
+});
+</script>
+{% endblock %}

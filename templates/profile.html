@@ -1,0 +1,129 @@
+{% extends "base.html" %}
+
+{% block title %}个人资料 - 宠物丢失网站{% endblock %}
+
+{% block content %}
+<div class="card" style="margin-bottom: 2rem;">
+    <div class="card-header">
+        <div style="display: flex; justify-content: space-between; align-items: center;">
+            <h2 style="margin: 0;">👤 个人资料</h2>
+            <a href="{{ url_for('edit_profile') }}" class="btn btn-primary">
+                ✏️ 编辑资料
+            </a>
+        </div>
+    </div>
+</div>
+
+<div class="card">
+    <div class="card-body">
+        <div style="display: grid; grid-template-columns: 200px 1fr; gap: 2rem; align-items: start;">
+            <!-- 头像区域 -->
+            <div style="text-align: center;">
+                {% if user.avatar %}
+                    <img src="{{ url_for('static', filename='uploads/' + user.avatar) }}" 
+                         alt="头像" 
+                         style="width: 150px; height: 150px; border-radius: 50%; object-fit: cover; border: 3px solid #3498db;">
+                {% else %}
+                    <div style="width: 150px; height: 150px; border-radius: 50%; background-color: #3498db; 
+                                display: flex; align-items: center; justify-content: center; color: white; 
+                                font-size: 3rem; margin: 0 auto;">
+                        {{ user.username[0].upper() }}
+                    </div>
+                {% endif %}
+                <h3 style="margin-top: 1rem; color: #2c3e50;">{{ user.real_name or user.username }}</h3>
+                <p style="color: #7f8c8d; margin: 0;">@{{ user.username }}</p>
+            </div>
+            
+            <!-- 基本信息区域 -->
+            <div>
+                <h4 style="color: #2c3e50; margin-bottom: 1.5rem; border-bottom: 2px solid #3498db; padding-bottom: 0.5rem;">📋 基本信息</h4>
+                
+                <div style="display: grid; gap: 1rem;">
+                    <div class="info-item">
+                        <label style="font-weight: bold; color: #555; display: block; margin-bottom: 0.3rem;">📧 邮箱</label>
+                        <div style="padding: 0.5rem; background-color: #f8f9fa; border-radius: 4px;">{{ user.email }}</div>
+                    </div>
+                    
+                    <div class="info-item">
+                        <label style="font-weight: bold; color: #555; display: block; margin-bottom: 0.3rem;">👤 真实姓名</label>
+                        <div style="padding: 0.5rem; background-color: #f8f9fa; border-radius: 4px;">
+                            {{ user.real_name or '未设置' }}
+                        </div>
+                    </div>
+                    
+                    <div class="info-item">
+                        <label style="font-weight: bold; color: #555; display: block; margin-bottom: 0.3rem;">📱 手机号码</label>
+                        <div style="padding: 0.5rem; background-color: #f8f9fa; border-radius: 4px;">
+                            {{ user.phone or '未设置' }}
+                        </div>
+                    </div>
+                    
+                    <div class="info-item">
+                        <label style="font-weight: bold; color: #555; display: block; margin-bottom: 0.3rem;">📍 所在地区</label>
+                        <div style="padding: 0.5rem; background-color: #f8f9fa; border-radius: 4px;">
+                            {{ user.location or '未设置' }}
+                        </div>
+                    </div>
+                    
+                    <div class="info-item">
+                        <label style="font-weight: bold; color: #555; display: block; margin-bottom: 0.3rem;">📝 个人简介</label>
+                        <div style="padding: 0.5rem; background-color: #f8f9fa; border-radius: 4px; min-height: 60px;">
+                            {{ user.bio or '这个人很懒，什么都没有留下...' }}
+                        </div>
+                    </div>
+                    
+                    <div class="info-item">
+                        <label style="font-weight: bold; color: #555; display: block; margin-bottom: 0.3rem;">🕒 注册时间</label>
+                        <div style="padding: 0.5rem; background-color: #f8f9fa; border-radius: 4px;">
+                            {{ user.created_at.strftime('%Y年%m月%d日 %H:%M') }}
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- 统计信息 -->
+<div class="card" style="margin-top: 2rem;">
+    <div class="card-body">
+        <h4 style="color: #2c3e50; margin-bottom: 1.5rem; text-align: center;">📊 我的统计</h4>
+        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1.5rem; text-align: center;">
+            <div class="stat-card" style="background: linear-gradient(135deg, #3498db, #2980b9); color: white; padding: 1.5rem; border-radius: 10px;">
+                <div style="font-size: 2.5rem; font-weight: bold; margin-bottom: 0.5rem;">{{ user.posts|length }}</div>
+                <div style="font-size: 1.1rem;">发布的信息</div>
+            </div>
+            
+            <div class="stat-card" style="background: linear-gradient(135deg, #27ae60, #229954); color: white; padding: 1.5rem; border-radius: 10px;">
+                <div style="font-size: 2.5rem; font-weight: bold; margin-bottom: 0.5rem;">{{ user.comments|length }}</div>
+                <div style="font-size: 1.1rem;">发表的评论</div>
+            </div>
+            
+            <div class="stat-card" style="background: linear-gradient(135deg, #f39c12, #e67e22); color: white; padding: 1.5rem; border-radius: 10px;">
+                <div style="font-size: 2.5rem; font-weight: bold; margin-bottom: 0.5rem;">
+                    {% set total_comments = 0 %}
+                    {% for post in user.posts %}
+                        {% set total_comments = total_comments + post.comments|length %}
+                    {% endfor %}
+                    {{ total_comments }}
+                </div>
+                <div style="font-size: 1.1rem;">收到的评论</div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- 响应式样式 -->
+<style>
+@media (max-width: 768px) {
+    .card-body > div:first-child {
+        grid-template-columns: 1fr !important;
+        text-align: center;
+    }
+    
+    .stat-card {
+        margin-bottom: 1rem;
+    }
+}
+</style>
+{% endblock %}

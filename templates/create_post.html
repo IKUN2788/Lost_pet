@@ -1,0 +1,176 @@
+{% extends "base.html" %}
+
+{% block title %}发布寻宠信息 - 宠物丢失网站{% endblock %}
+
+{% block content %}
+<div class="card" style="max-width: 800px; margin: 2rem auto;">
+    <div class="card-header">
+        <h2>🐾 发布寻宠信息</h2>
+        <p style="margin: 0.5rem 0 0 0; color: #666;">请详细填写宠物信息，帮助更多人关注和寻找</p>
+    </div>
+    <div class="card-body">
+        <form method="POST" enctype="multipart/form-data" onsubmit="return validatePostForm()" id="post-form">
+            <div class="form-group">
+                <label for="title">标题 *</label>
+                <input type="text" class="form-control" id="title" name="title" required 
+                       placeholder="例如：寻找走失的金毛犬"豆豆"" maxlength="100">
+                <small style="color: #666;">简洁明了的标题有助于吸引更多关注</small>
+            </div>
+            
+            <div class="form-group">
+                <label for="pet_type">宠物类型 *</label>
+                <select class="form-control" id="pet_type" name="pet_type" required>
+                    <option value="">请选择宠物类型</option>
+                    <option value="狗">狗狗</option>
+                    <option value="猫">猫咪</option>
+                    <option value="鸟">鸟类</option>
+                    <option value="兔子">兔子</option>
+                    <option value="仓鼠">仓鼠</option>
+                    <option value="其他">其他</option>
+                </select>
+            </div>
+            
+            <div class="form-group">
+                <label for="lost_location">丢失地点 *</label>
+                <input type="text" class="form-control" id="lost_location" name="lost_location" required 
+                       placeholder="例如：北京市朝阳区望京SOHO附近" maxlength="200">
+                <small style="color: #666;">请尽量详细描述丢失的具体位置</small>
+            </div>
+            
+            <div class="form-group">
+                <label for="description">详细描述 *</label>
+                <textarea class="form-control" id="description" name="description" required 
+                          placeholder="请详细描述宠物的外观特征、性格、丢失时间、当时情况等信息..." 
+                          rows="6" maxlength="2000"></textarea>
+                <small style="color: #666;">详细的描述有助于他人识别和提供线索</small>
+            </div>
+            
+            <div class="form-group">
+                <label for="contact_info">联系方式 *</label>
+                <input type="text" class="form-control" id="contact_info" name="contact_info" required 
+                       placeholder="请留下您的联系方式（手机号、微信等）" maxlength="100">
+                <small style="color: #666;">方便好心人联系您提供线索</small>
+            </div>
+            
+            <div class="form-group">
+                <label for="images">宠物照片（最多9张）</label>
+                <div class="file-upload">
+                    <input type="file" id="images" name="images" multiple accept="image/*">
+                    <label for="images" class="file-upload-label">
+                        <div style="font-size: 2rem; margin-bottom: 0.5rem;">📷</div>
+                        <div>点击选择图片或拖拽图片到此处</div>
+                        <div style="font-size: 0.9rem; color: #666; margin-top: 0.5rem;">
+                            支持 JPG、PNG、GIF 格式，最多9张图片
+                        </div>
+                    </label>
+                </div>
+                
+                <div id="image-preview" class="image-grid" style="margin-top: 1rem;"></div>
+            </div>
+            
+            <div style="background-color: #e8f4fd; padding: 1rem; border-radius: 8px; margin: 1.5rem 0;">
+                <h4 style="color: #2c3e50; margin-bottom: 0.5rem;">💡 发布小贴士</h4>
+                <ul style="color: #555; margin: 0; padding-left: 1.5rem;">
+                    <li>上传清晰的宠物照片，包括正面、侧面等不同角度</li>
+                    <li>详细描述宠物的品种、颜色、大小、特殊标记等特征</li>
+                    <li>说明丢失的具体时间和地点</li>
+                    <li>留下准确的联系方式，方便好心人联系</li>
+                </ul>
+            </div>
+            
+            <div style="display: flex; gap: 1rem; justify-content: flex-end;">
+                <a href="{{ url_for('index') }}" class="btn" style="background-color: #95a5a6; color: white;">
+                    取消
+                </a>
+                <button type="submit" class="btn btn-primary">
+                    发布信息
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+
+// 表单验证
+function validatePostForm() {
+    const title = document.getElementById('title').value.trim();
+    const petType = document.getElementById('pet_type').value;
+    const lostLocation = document.getElementById('lost_location').value.trim();
+    const description = document.getElementById('description').value.trim();
+    const contactInfo = document.getElementById('contact_info').value.trim();
+    
+    if (!title) {
+        showAlert('请填写标题', 'danger');
+        document.getElementById('title').focus();
+        return false;
+    }
+    
+    if (!petType) {
+        showAlert('请选择宠物类型', 'danger');
+        document.getElementById('pet_type').focus();
+        return false;
+    }
+    
+    if (!lostLocation) {
+        showAlert('请填写丢失地点', 'danger');
+        document.getElementById('lost_location').focus();
+        return false;
+    }
+    
+    if (!description || description.length < 10) {
+        showAlert('请详细描述宠物信息（至少10个字符）', 'danger');
+        document.getElementById('description').focus();
+        return false;
+    }
+    
+    if (!contactInfo) {
+        showAlert('请填写联系方式', 'danger');
+        document.getElementById('contact_info').focus();
+        return false;
+    }
+    
+    // 检查是否上传了图片
+    const files = document.getElementById('images').files;
+    if (files.length === 0) {
+        const confirm = window.confirm('您还没有上传宠物照片，照片有助于他人识别。确定要继续发布吗？');
+        if (!confirm) {
+            return false;
+        }
+    }
+    
+    return true;
+}
+
+// 拖拽上传功能
+const fileUpload = document.querySelector('.file-upload');
+const fileInput = document.getElementById('images');
+
+fileUpload.addEventListener('dragover', function(e) {
+    e.preventDefault();
+    this.style.backgroundColor = '#e3f2fd';
+    this.style.borderColor = '#3498db';
+});
+
+fileUpload.addEventListener('dragleave', function(e) {
+    e.preventDefault();
+    this.style.backgroundColor = '#f8f9fa';
+    this.style.borderColor = '#ddd';
+});
+
+fileUpload.addEventListener('drop', function(e) {
+    e.preventDefault();
+    this.style.backgroundColor = '#f8f9fa';
+    this.style.borderColor = '#ddd';
+    
+    const files = e.dataTransfer.files;
+    fileInput.files = files;
+    
+    // 触发change事件，让main.js中的处理函数接管
+    const event = new Event('change', { bubbles: true });
+    fileInput.dispatchEvent(event);
+});
+</script>
+{% endblock %}

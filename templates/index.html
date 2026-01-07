@@ -1,0 +1,208 @@
+{% extends "base.html" %}
+
+{% block title %}首页 - 宠物丢失网站{% endblock %}
+
+{% block content %}
+<!-- 欢迎横幅 -->
+<div class="card" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; margin-bottom: 2rem;">
+    <div class="card-body" style="text-align: center; padding: 3rem 2rem;">
+        <h1 style="font-size: 2.5rem; margin-bottom: 1rem;">🐾 宠物丢失网站</h1>
+        <p style="font-size: 1.2rem; margin-bottom: 2rem; opacity: 0.9;">帮助每一个走失的小生命回家</p>
+        {% if current_user.is_authenticated %}
+            <a href="{{ url_for('create_post') }}" class="btn btn-success" style="font-size: 1.1rem; padding: 0.8rem 2rem;">
+                📝 发布寻宠信息
+            </a>
+        {% else %}
+            <div>
+                <a href="{{ url_for('register') }}" class="btn btn-success" style="margin-right: 1rem;">立即注册</a>
+                <a href="{{ url_for('login') }}" class="btn" style="background-color: rgba(255,255,255,0.2); color: white;">用户登录</a>
+            </div>
+        {% endif %}
+    </div>
+</div>
+
+<!-- 搜索栏 -->
+<div class="card" style="margin-bottom: 2rem;">
+    <div class="card-body">
+        <div style="display: flex; gap: 1rem; align-items: center;">
+            <input type="text" id="search-input" class="form-control" 
+                   placeholder="🔍 搜索宠物类型、丢失地点或描述关键词..." 
+                   style="flex: 1;">
+            <select id="pet-type-filter" class="form-control" style="width: 150px;">
+                <option value="">所有类型</option>
+                <option value="狗">狗狗</option>
+                <option value="猫">猫咪</option>
+                <option value="鸟">鸟类</option>
+                <option value="兔子">兔子</option>
+                <option value="仓鼠">仓鼠</option>
+                <option value="其他">其他</option>
+            </select>
+        </div>
+    </div>
+</div>
+
+<!-- 统计信息 -->
+<div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1rem; margin-bottom: 2rem;">
+    <div class="card" style="text-align: center; background-color: #e8f5e8;">
+        <div class="card-body">
+            <h3 style="color: #27ae60; margin-bottom: 0.5rem;">{{ posts|length }}</h3>
+            <p style="margin: 0; color: #555;">寻宠信息</p>
+        </div>
+    </div>
+    <div class="card" style="text-align: center; background-color: #e3f2fd;">
+        <div class="card-body">
+            <h3 style="color: #3498db; margin-bottom: 0.5rem;">{% set total_comments = 0 %}{% for post in posts %}{% set total_comments = total_comments + post.comments|length %}{% endfor %}{{ total_comments }}</h3>
+            <p style="margin: 0; color: #555;">热心评论</p>
+        </div>
+    </div>
+    <div class="card" style="text-align: center; background-color: #fff3e0;">
+        <div class="card-body">
+            <h3 style="color: #f39c12; margin-bottom: 0.5rem;">24/7</h3>
+            <p style="margin: 0; color: #555;">全天候服务</p>
+        </div>
+    </div>
+</div>
+
+<!-- 帖子列表 -->
+{% if posts %}
+    <div class="post-grid" id="posts-container">
+        {% for post in posts %}
+        <div class="post-card" data-pet-type="{{ post.pet_type }}">
+            <!-- 图片区域 -->
+            <div class="post-images">
+                {% if post.images %}
+                    <img src="{{ url_for('static', filename='uploads/' + post.images[0].filename) }}" 
+                         alt="{{ post.title }}" onclick="openImageModal(this.src)">
+                    {% if post.images|length > 1 %}
+                        <div style="position: absolute; bottom: 10px; right: 10px; 
+                                    background: rgba(0,0,0,0.7); color: white; 
+                                    padding: 0.3rem 0.6rem; border-radius: 15px; font-size: 0.8rem;">
+                            +{{ post.images|length - 1 }} 张
+                        </div>
+                    {% endif %}
+                {% else %}
+                    <div style="display: flex; align-items: center; justify-content: center; 
+                                height: 100%; background-color: #f8f9fa; color: #999;">
+                        <div style="text-align: center;">
+                            <div style="font-size: 3rem;">🐾</div>
+                            <div>暂无图片</div>
+                        </div>
+                    </div>
+                {% endif %}
+            </div>
+            
+            <!-- 内容区域 -->
+            <div class="post-content">
+                <div class="post-title">
+                    <a href="{{ url_for('view_post', post_id=post.id) }}" 
+                       style="text-decoration: none; color: inherit;">
+                        {{ post.title }}
+                    </a>
+                </div>
+                
+                <div class="post-meta">
+                    <span>🏷️ {{ post.pet_type }}</span>
+                    <span style="margin-left: 1rem;">📍 {{ post.lost_location }}</span>
+                </div>
+                
+                <div class="post-description">
+                    {{ post.description }}
+                </div>
+                
+                <div style="display: flex; justify-content: space-between; align-items: center; 
+                            margin-top: 1rem; padding-top: 1rem; border-top: 1px solid #eee;">
+                    <div style="color: #7f8c8d; font-size: 0.9rem;">
+                        <span>👤 {{ post.author.username }}</span>
+                        <span style="margin-left: 1rem;">🕒 {{ post.created_at.strftime('%m-%d %H:%M') }}</span>
+                    </div>
+                    <div style="color: #7f8c8d; font-size: 0.9rem;">
+                        💬 {{ post.comments|length }} 条评论
+                    </div>
+                </div>
+                
+                <a href="{{ url_for('view_post', post_id=post.id) }}" 
+                   class="btn btn-primary" style="width: 100%; margin-top: 1rem;">
+                    查看详情
+                </a>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+{% else %}
+    <div class="card" style="text-align: center; padding: 3rem;">
+        <div style="font-size: 4rem; margin-bottom: 1rem;">🐾</div>
+        <h3 style="color: #7f8c8d; margin-bottom: 1rem;">暂无寻宠信息</h3>
+        <p style="color: #999; margin-bottom: 2rem;">成为第一个发布寻宠信息的用户吧！</p>
+        {% if current_user.is_authenticated %}
+            <a href="{{ url_for('create_post') }}" class="btn btn-primary">
+                发布第一条信息
+            </a>
+        {% else %}
+            <a href="{{ url_for('register') }}" class="btn btn-primary">
+                注册并发布
+            </a>
+        {% endif %}
+    </div>
+{% endif %}
+{% endblock %}
+
+{% block scripts %}
+<script>
+// 搜索和筛选功能
+function setupSearchAndFilter() {
+    const searchInput = document.getElementById('search-input');
+    const petTypeFilter = document.getElementById('pet-type-filter');
+    const posts = document.querySelectorAll('.post-card');
+    
+    function filterPosts() {
+        const searchTerm = searchInput.value.toLowerCase();
+        const selectedType = petTypeFilter.value;
+        
+        posts.forEach(post => {
+            const title = post.querySelector('.post-title').textContent.toLowerCase();
+            const description = post.querySelector('.post-description').textContent.toLowerCase();
+            const location = post.querySelector('.post-meta').textContent.toLowerCase();
+            const petType = post.dataset.petType;
+            
+            const matchesSearch = !searchTerm || 
+                                title.includes(searchTerm) || 
+                                description.includes(searchTerm) || 
+                                location.includes(searchTerm);
+            
+            const matchesType = !selectedType || petType === selectedType;
+            
+            if (matchesSearch && matchesType) {
+                post.style.display = 'block';
+            } else {
+                post.style.display = 'none';
+            }
+        });
+    }
+    
+    searchInput.addEventListener('input', filterPosts);
+    petTypeFilter.addEventListener('change', filterPosts);
+}
+
+// 图片模态框
+function openImageModal(src) {
+    const modal = document.createElement('div');
+    modal.className = 'image-modal';
+    modal.innerHTML = `
+        <div class="modal-backdrop" onclick="closeModal(this)">
+            <div class="modal-content">
+                <img src="${src}" alt="宠物图片">
+                <button class="close-btn" onclick="closeModal(this)">&times;</button>
+            </div>
+        </div>
+    `;
+    
+    document.body.appendChild(modal);
+    document.body.style.overflow = 'hidden';
+}
+
+// 页面加载完成后初始化
+document.addEventListener('DOMContentLoaded', function() {
+    setupSearchAndFilter();
+});
+</script>
+{% endblock %}
