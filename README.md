@@ -1,3 +1,5 @@
+<img width="1912" height="1017" alt="image" src="https://github.com/user-attachments/assets/67d5de24-5565-41e8-995f-5a7bd5b953fa" />
+
 # 🐾 KUNKUN宠物丢失网站 - 完整项目解析
 
 ## 项目概述
